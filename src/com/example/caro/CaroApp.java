@@ -7,12 +7,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class CaroApp extends ActionBarActivity {
 
-	private Button mBoardButton[];
 	private CaroGame nGame;
-	private boolean mGameOver;
+
+	private Button mBoardButton[];
+
+	private TextView mInfoTextView;
+	private TextView mHumanCount;
+	private TextView mTieCount;
+	private TextView mAndroidCount;
+
+	private int mHumanCounter = 0;
+	private int mTieCounter = 0;
+	private int mAndroidCounter = 0;
+
+	private boolean mHumanFirst = true;
+	private boolean mGameOver = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,19 +43,37 @@ public class CaroApp extends ActionBarActivity {
 		mBoardButton[7] = (Button) findViewById(R.id.eight);
 		mBoardButton[8] = (Button) findViewById(R.id.nine);
 
+		mInfoTextView = (TextView) findViewById(R.id.information);
+		mHumanCount = (TextView) findViewById(R.id.humanCount);
+		mTieCount = (TextView) findViewById(R.id.tiesCount);
+		mAndroidCount = (TextView) findViewById(R.id.androidCount);
+
+		mHumanCount.setText(Integer.toString(mHumanCounter));
+		mTieCount.setText(Integer.toString(mTieCounter));
+		mAndroidCount.setText(Integer.toString(mAndroidCounter));
+
 		startNewGame();
 	}
 
 	private void startNewGame() {
+		mGameOver = false;
 		nGame.clearBoard();
+
 		for (int i = 0; i < nGame.getBOARD_SIZE(); i++) {
 			mBoardButton[i].setText("");
 			mBoardButton[i].setEnabled(true);
 			mBoardButton[i].setOnClickListener(new ButtonClickListener(i));
 		}
-		// player always move first
-		int move = nGame.getComputerMove();
-		setMove(nGame.ANDROID_PLAYER, move);
+
+		if (mHumanFirst) {
+			mInfoTextView.setText(R.string.first_human);
+			mHumanFirst = false;
+		} else {
+			mInfoTextView.setText(R.string.turn_computer);
+			int move = nGame.getComputerMove();
+			setMove(nGame.ANDROID_PLAYER, move);
+			mHumanFirst = true;
+		}
 	}
 
 	private class ButtonClickListener implements View.OnClickListener {
@@ -56,20 +87,33 @@ public class CaroApp extends ActionBarActivity {
 			if (!mGameOver) {
 				if (mBoardButton[location].isEnabled()) {
 					setMove(nGame.HUMAN_PLAYER, location);
+
 					int winner = nGame.checkForWinner();
 
 					if (winner == 0) {
-						int location = nGame.getComputerMove();
-						setMove(nGame.ANDROID_PLAYER, location);
+						mInfoTextView.setText(R.string.turn_computer);
+						int move = nGame.getComputerMove();
+						setMove(nGame.ANDROID_PLAYER, move);
 						winner = nGame.checkForWinner();
 					}
+
 					if (winner == 0)
-						return;
+						mInfoTextView.setText(R.string.turn_human);
 					else if (winner == 1) {
+						mInfoTextView.setText(R.string.result_tie);
+						mTieCounter++;
+						mTieCount.setText(Integer.toString(mTieCounter));
 						mGameOver = true;
 					} else if (winner == 2) {
+						mInfoTextView.setText(R.string.result_human_wins);
+						mHumanCounter++;
+						mHumanCount.setText(Integer.toString(mHumanCounter));
 						mGameOver = true;
 					} else {
+						mInfoTextView.setText(R.string.result_android_wins);
+						mAndroidCounter++;
+						mAndroidCount
+								.setText(Integer.toString(mAndroidCounter));
 						mGameOver = true;
 					}
 				}
@@ -91,7 +135,7 @@ public class CaroApp extends ActionBarActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.caro_app, menu);
+		getMenuInflater().inflate(R.menu.game_menu, menu);
 		return true;
 	}
 
@@ -101,23 +145,14 @@ public class CaroApp extends ActionBarActivity {
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
+		switch(id) {
+		case R.id.newGame:
+			startNewGame();
+			break;
+		case R.id.exitGame:
+			CaroApp.this.finish();
+			break;
 		}
-		return super.onOptionsItemSelected(item);
+		return true;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
